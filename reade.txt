@@ -1,0 +1,4 @@
+ngrok http 5000 --domain desprintera.ngrok.io
+
+
+ngrok http 5000 --domain desprinterb.ngrok.io
