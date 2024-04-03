@@ -132,6 +132,8 @@ def print_badge(
     fullName = fullName.replace("<", "")
     fullName = fullName.replace(">", "")
     fullName = fullName.replace("|", "")
+    fullName = fullName.replace("\n", "")
+
 
     company = company.replace("/", "")
     company = company.replace("\\", "")
@@ -142,6 +144,7 @@ def print_badge(
     company = company.replace("<", "")
     company = company.replace(">", "")
     company = company.replace("|", "")
+    company = company.replace("\n", "")
 
     pdfName = fullName + "_" + company + ".pdf"
     pdfPath = os.path.join("docs", pdfName)
