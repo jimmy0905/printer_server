@@ -208,68 +208,100 @@ create_docs_folder()
 
 # app server code
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import http.server
+import socketserver
+import ssl
+import json
 
-app = Flask(__name__)
-CORS(app)
-@app.route("/print", methods=["POST"])
-def print_card():
-    jsondata = request.json
-    print(jsondata)
-    ticket_type = (
-        jsondata.get("ticket_type") if jsondata.get("ticket_type") is not None else ""
-    )
-    if ticket_type == "student_full":
-        return "Student ticket is not allowed to print"
-    if ticket_type == "":
-        return {"error": "ticket_type is required"}
-    fullName = jsondata.get("fullName") if jsondata.get("fullName") is not None else ""
-    company = jsondata.get("company") if jsondata.get("company") is not None else ""
-    title = jsondata.get("title") if jsondata.get("title") is not None else ""
-    top_left_text = (
-        jsondata.get("top_left_text")
-        if jsondata.get("top_left_text") is not None
-        else ""
-    )
-    top_right_text = (
-        jsondata.get("top_right_text")
-        if jsondata.get("top_right_text") is not None
-        else ""
-    )
-    bottom_left_text = (
-        jsondata.get("bottom_left_text")
-        if jsondata.get("bottom_left_text") is not None
-        else ""
-    )
-    bottom_right_text = (
-        jsondata.get("bottom_right_text")
-        if jsondata.get("bottom_right_text") is not None
-        else ""
-    )
-    qrcode_id = (
-        jsondata.get("qrcode_id") if jsondata.get("qrcode_id") is not None else None
-    )
-    language = (
-        jsondata.get("language")
-        if jsondata.get("language") is not None
-        else "DONT SKIP"
-    )
-    print_badge(
-        fullName=fullName,
-        company=company,
-        title=title,
-        top_left_text=top_left_text,
-        top_right_text=top_right_text,
-        bottom_left_text=bottom_left_text,
-        bottom_right_text=bottom_right_text,
-        qrcode_id=qrcode_id,
-        language=language,
-    )
-    return "Card printed"
+# Set up the server parameters
+host = "0.0.0.0"
+port = 5000
 
-@app.route("/test", methods=["GET"])
-def test():
-    return "Hello World"
+# Generate an SSL/TLS certificate
+certfile = "cert.pem"
+keyfile = "key.pem"
 
-app.run(host="0.0.0.0", port=5000)
+# Create the HTTP request handler
+class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Private-Network', 'true')
+        super().end_headers()
+    def do_OPTIONS(self):
+        print("OPTIONS")
+        print(self.path)
+        self.send_response(200, "ok")
+        self.end_headers()
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(b"Hello, world!")
+    def do_POST(self):
+        print(self.path)
+        if self.path == "/print":
+            print("POST /print")
+            content_length = int(self.headers["Content-Length"])
+            body = self.rfile.read(content_length)
+            jsondata = json.loads(body)
+
+            ticket_type = jsondata.get("ticket_type", "")
+            if ticket_type == "student_full":
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Student ticket is not allowed to print")
+                return
+
+            if ticket_type == "":
+                self.send_response(400)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "ticket_type is required"}).encode())
+                return
+
+            fullName = jsondata.get("fullName") if jsondata.get("fullName") is not None else ""
+            company = jsondata.get("company") if jsondata.get("company") is not None else ""
+            title = jsondata.get("title") if jsondata.get("title") is not None else ""
+            top_left_text = jsondata.get("top_left_text") if jsondata.get("top_left_text") is not None else ""
+            top_right_text = jsondata.get("top_right_text") if jsondata.get("top_right_text") is not None else ""
+            bottom_left_text = jsondata.get("bottom_left_text") if jsondata.get("bottom_left_text") is not None else ""
+            bottom_right_text = jsondata.get("bottom_right_text") if jsondata.get("bottom_right_text") is not None else ""
+            qrcode_id = jsondata.get("qrcode_id") if jsondata.get("qrcode_id") is not None else ""
+            language = jsondata.get("language") if jsondata.get("language") is not None else "DONT SKIP"
+            
+            print_badge(
+                fullName=fullName,
+                company=company,
+                title=title,
+                top_left_text=top_left_text,
+                top_right_text=top_right_text,
+                bottom_left_text=bottom_left_text,
+                bottom_right_text=bottom_right_text,
+                qrcode_id=qrcode_id,
+                language=language,
+            )
+
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Card printed")
+
+# Create the HTTPS server
+httpd = socketserver.TCPServer((host, port), MyHTTPRequestHandler)
+httpd.socket = ssl.wrap_socket(httpd.socket, certfile=certfile, keyfile=keyfile, server_side=True)
+
+#log my ip address
+import socket
+hostname = socket.gethostname()
+IPAddr = socket.gethostbyname(hostname)
+print("Your Computer IP Address is:" + IPAddr)
+# other devices can access the server using the IP address printed above
+print(f"Server running on https://{IPAddr}:{port}")
+
+
+# Start the server
+print(f"Server running on https://{host}:{port}")
+httpd.serve_forever()
