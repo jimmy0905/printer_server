@@ -10,6 +10,8 @@ from pdf2image import convert_from_path
 import os
 
 
+#printname
+print_name = "PrinterA"
 # set the font
 FONTNAME = "Msjh"
 pdfmetrics.registerFont(TTFont(FONTNAME, "./msjh.ttf"))
@@ -120,6 +122,27 @@ def print_badge(
     qrcode_id,
     language="DONT SKIP",
 ):
+    #remove the all the file name limit characters
+    fullName = fullName.replace("/", "")
+    fullName = fullName.replace("\\", "")
+    fullName = fullName.replace(":", "")
+    fullName = fullName.replace("*", "")
+    fullName = fullName.replace("?", "")
+    fullName = fullName.replace('"', "")
+    fullName = fullName.replace("<", "")
+    fullName = fullName.replace(">", "")
+    fullName = fullName.replace("|", "")
+
+    company = company.replace("/", "")
+    company = company.replace("\\", "")
+    company = company.replace(":", "")
+    company = company.replace("*", "")
+    company = company.replace("?", "")
+    company = company.replace('"', "")
+    company = company.replace("<", "")
+    company = company.replace(">", "")
+    company = company.replace("|", "")
+
     pdfName = fullName + "_" + company + ".pdf"
     pdfPath = os.path.join("docs", pdfName)
     c = canvas.Canvas(pdfPath, pagesize=(width, height))
@@ -160,15 +183,13 @@ def print_badge(
     if qrcode_id is not None:
 
         size = 20 * mm
-        qrcode_margin = 3 * mm
+        qrcode_margin = 5 * mm
         qr = QRCodeImage(qrcode_id, size=size)
         qr.drawOn(c, width - size - qrcode_margin, height - 25 * mm - size)
     c.save()
     images = convert_from_path(pdfPath)
     imagePath = os.path.join("docs", pdfName + ".jpg")
     images[0].save(imagePath, "JPEG")
-    print_name = win32print.GetDefaultPrinter()
-    # print_name = "Brother QL-820NWB"
     print_with_selected_printer(print_name, imagePath)
 
 
