@@ -20,6 +20,58 @@ pdfmetrics.registerFont(TTFont(FONTNAME, "./msjh.ttf"))
 width, height = 90 * mm, 62 * mm
 margin = 5 * mm
 
+def get_width_of_string(s):
+    width = 0
+    for character in s:
+        if '\u4e00' <= character <= '\u9fff':
+            width += 2
+        else:
+            width += 1
+    return width
+
+class CustomTextWrapper(textwrap.TextWrapper):
+    def _split(self, text):
+        chunks = super()._split(text)
+        new_chunks = []
+        for chunk in chunks:
+            if '\u4e00' <= chunk[0] <= '\u9fff':
+                new_chunks.extend(list(chunk))
+            else:
+                new_chunks.append(chunk)
+        return new_chunks
+
+    def _wrap_chunks(self, chunks):
+        lines = []
+        if self.width <= 0:
+            raise ValueError("invalid width %r (must be > 0)" % self.width)
+        while chunks:
+            cur_line = []
+            cur_len = 0
+            if lines:
+                indent = self.subsequent_indent
+            else:
+                indent = self.initial_indent
+            width = self.width - len(indent)
+            while chunks:
+                l = get_width_of_string(chunks[0])
+                if cur_len + l <= width:
+                    cur_line.append(chunks.pop(0))
+                    cur_len += l
+                else:
+                    break
+            if chunks and get_width_of_string(chunks[0]) > width:
+                self._handle_long_word(chunks, cur_line, cur_len, width)
+            if cur_line and (len(lines) + 1) == self.max_lines:
+                while chunks:
+                    if chunks[0].strip() and cur_len + 1 < width:
+                        cur_line.append(chunks.pop(0))
+                    else:
+                        break
+            if cur_line:
+                lines.append(indent + ''.join(cur_line))
+        return lines
+
+
 
 def add_poppler_to_path():
     poppler_relative_path = "poppler-24.02.0/Library/bin"
@@ -158,7 +210,8 @@ def print_badge(
     else:
         fullName = fullName[:-2]
 
-    wrapped_fullName = textwrap.fill(fullName, 20)
+    customTextWrapper = CustomTextWrapper(width=20)
+    wrapped_fullName = customTextWrapper.fill(fullName)
     wrapped_fullName_lines = wrapped_fullName.splitlines()
 
     line_used = 0
@@ -168,7 +221,8 @@ def print_badge(
         c.drawString(margin, height - 15 * mm - (line_used * line_height), line)
         line_used = line_used + 1
 
-    wrapped_company = textwrap.fill(company, 20)
+    customTextWrapper = CustomTextWrapper(width=20)
+    wrapped_company = customTextWrapper.fill(company)
     wrapped_company_lines = wrapped_company.splitlines()
 
     for i, line in enumerate(wrapped_company_lines):
