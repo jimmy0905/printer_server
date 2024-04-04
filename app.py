@@ -242,6 +242,8 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         print(self.path)
         if self.path == "/print":
+            #print the ip address of the client
+            print(self.client_address)
             print("POST /print")
             content_length = int(self.headers["Content-Length"])
             body = self.rfile.read(content_length)
@@ -271,7 +273,7 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             bottom_right_text = jsondata.get("bottom_right_text") if jsondata.get("bottom_right_text") is not None else ""
             qrcode_id = jsondata.get("qrcode_id") if jsondata.get("qrcode_id") is not None else ""
             language = jsondata.get("language") if jsondata.get("language") is not None else "DONT SKIP"
-            
+
             print_badge(
                 fullName=fullName,
                 company=company,
