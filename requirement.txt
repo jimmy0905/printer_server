@@ -13,7 +13,6 @@ MarkupSafe==2.1.5
 pdf2image==1.17.0
 pillow==10.2.0
 pycparser==2.22
-pyOpenSSL==24.1.0
 pypng==0.20220715.0
 pywin32==306
 qrcode==7.4.2

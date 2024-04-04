@@ -11,7 +11,7 @@ import os
 
 
 #printname
-print_name = "PrinterA"
+print_name = "PrinterB"
 # set the font
 FONTNAME = "Msjh"
 pdfmetrics.registerFont(TTFont(FONTNAME, "./msjh.ttf"))
@@ -215,7 +215,7 @@ import json
 
 # Set up the server parameters
 host = "0.0.0.0"
-port = 5000
+port = 8000 # 3000, 5000, 8080, 8000
 
 # Generate an SSL/TLS certificate
 certfile = "cert.pem"
