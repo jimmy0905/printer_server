@@ -210,7 +210,7 @@ def print_badge(
     else:
         fullName = fullName[:-2]
 
-    customTextWrapper = CustomTextWrapper(width=20)
+    customTextWrapper = CustomTextWrapper(width=18)
     wrapped_fullName = customTextWrapper.fill(fullName)
     wrapped_fullName_lines = wrapped_fullName.splitlines()
 
