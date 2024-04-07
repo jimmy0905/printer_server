@@ -240,7 +240,7 @@ def print_badge(
     print("fullName:" + fullName)
     print("qrcode:" + qrcode_id)
     if qrcode_id is not None and qrcode_id != "":
-        
+        print("draw qr code")  
         size = 20 * mm
         qrcode_margin = 5 * mm
         qr = QRCodeImage(qrcode_id, size=size)
