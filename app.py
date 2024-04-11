@@ -1,4 +1,11 @@
-import win32ui, win32con, win32print
+import socket
+import json
+import ssl
+import socketserver
+import http.server
+import win32ui
+import win32con
+import win32print
 from PIL import Image, ImageWin
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import mm
@@ -10,7 +17,7 @@ from pdf2image import convert_from_path
 import os
 
 
-#printname
+# printname
 print_name = "PrinterB"
 # set the font
 FONTNAME = "Msjh"
@@ -22,6 +29,7 @@ pdfmetrics.registerFont(TTFont(FONTNAMEBOLD, "./msjhbd.ttc"))
 width, height = 90 * mm, 62 * mm
 margin = 5 * mm
 
+
 def get_width_of_string(s):
     width = 0
     for character in s:
@@ -31,11 +39,13 @@ def get_width_of_string(s):
             width += 1
     return width
 
+
 class CustomTextWrapper(textwrap.TextWrapper):
     def _split(self, text):
         chunks = super()._split(text)
         new_chunks = []
         for chunk in chunks:
+            print(chunk)
             if '\u4e00' <= chunk[0] <= '\u9fff':
                 new_chunks.extend(list(chunk))
             else:
@@ -46,33 +56,23 @@ class CustomTextWrapper(textwrap.TextWrapper):
         lines = []
         if self.width <= 0:
             raise ValueError("invalid width %r (must be > 0)" % self.width)
-        while chunks:
+        if chunks:
+            cur_line = [chunks.pop(0)]
+            cur_len = len(cur_line[0])
+        else:
             cur_line = []
             cur_len = 0
-            if lines:
-                indent = self.subsequent_indent
+        while chunks:
+            if cur_len + len(chunks[0]) <= self.width:
+                cur_len += len(chunks[0])
+                cur_line.append(chunks.pop(0))
             else:
-                indent = self.initial_indent
-            width = self.width - len(indent)
-            while chunks:
-                l = get_width_of_string(chunks[0])
-                if cur_len + l <= width:
-                    cur_line.append(chunks.pop(0))
-                    cur_len += l
-                else:
-                    break
-            if chunks and get_width_of_string(chunks[0]) > width:
-                self._handle_long_word(chunks, cur_line, cur_len, width)
-            if cur_line and (len(lines) + 1) == self.max_lines:
-                while chunks:
-                    if chunks[0].strip() and cur_len + 1 < width:
-                        cur_line.append(chunks.pop(0))
-                    else:
-                        break
-            if cur_line:
-                lines.append(indent + ''.join(cur_line))
+                lines.append(''.join(cur_line))
+                cur_line = [chunks.pop(0)]
+                cur_len = len(cur_line[0])
+        if cur_line:
+            lines.append(''.join(cur_line))
         return lines
-
 
 
 def add_poppler_to_path():
@@ -176,7 +176,7 @@ def print_badge(
     qrcode_id,
     language="DONT SKIP",
 ):
-    #remove the all the file name limit characters
+    # remove the all the file name limit characters
     fullName = fullName.replace("/", "")
     fullName = fullName.replace("\\", "")
     fullName = fullName.replace(":", "")
@@ -188,7 +188,6 @@ def print_badge(
     fullName = fullName.replace("|", "")
     fullName = fullName.replace("\n", "")
 
-
     company = company.replace("/", "")
     company = company.replace("\\", "")
     company = company.replace(":", "")
@@ -199,8 +198,7 @@ def print_badge(
     company = company.replace(">", "")
     company = company.replace("|", "")
     company = company.replace("\n", "")
-
-    pdfName = fullName + "_" + company + ".pdf"
+    pdfName = qrcode_id + ".pdf" if qrcode_id is not None and qrcode_id != "" else fullName +".pdf"
     pdfPath = os.path.join("docs", pdfName)
     c = canvas.Canvas(pdfPath, pagesize=(width, height))
 
@@ -215,23 +213,28 @@ def print_badge(
     customTextWrapper = CustomTextWrapper(width=18)
     wrapped_fullName = customTextWrapper.fill(fullName)
     wrapped_fullName_lines = wrapped_fullName.splitlines()
-
+    print("wrapped_fullName_lines")
     line_used = 0
     line_height = 8 * mm
     for i, line in enumerate(wrapped_fullName_lines):
         c.setFont(FONTNAMEBOLD, 20)
-        c.drawString(margin, height - 15 * mm - (line_used * line_height), line)
+        c.drawString(margin, height - 10 * mm -
+                     (line_used * line_height), line)
         line_used = line_used + 1
 
+    print("drawed name")
     customTextWrapper = CustomTextWrapper(width=20)
     wrapped_company = customTextWrapper.fill(company)
     wrapped_company_lines = wrapped_company.splitlines()
 
+    print("wrapped_company_lines")
     for i, line in enumerate(wrapped_company_lines):
         c.setFont(FONTNAME, 14)
-        c.drawString(margin, height - 15 * mm - (line_used * line_height), line)
+        c.drawString(margin, height - 10 * mm -
+                     (line_used * line_height), line)
         line_used = line_used + 1
 
+    print("drawed company")
     # draw the 4 concer
     c.setFont(FONTNAME, 8)
     c.drawString(margin, height - margin, top_left_text)
@@ -242,7 +245,7 @@ def print_badge(
     print("fullName:" + fullName)
     print("qrcode:" + qrcode_id)
     if qrcode_id is not None and qrcode_id != "":
-        print("draw qr code")  
+        print("draw qr code")
         size = 20 * mm
         qrcode_margin = 5 * mm
         qr = QRCodeImage(qrcode_id, size=size)
@@ -266,20 +269,18 @@ create_docs_folder()
 
 # app server code
 
-import http.server
-import socketserver
-import ssl
-import json
 
 # Set up the server parameters
 host = "0.0.0.0"
-port = 8000 # 3000, 5000, 8080, 8000
+port = 8000  # 3000, 5000, 8080, 8000
 
 # Generate an SSL/TLS certificate
 certfile = "cert.pem"
 keyfile = "key.pem"
 
 # Create the HTTP request handler
+
+
 class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -287,20 +288,23 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.send_header('Access-Control-Allow-Private-Network', 'true')
         super().end_headers()
+
     def do_OPTIONS(self):
         print("OPTIONS")
         print(self.path)
         self.send_response(200, "ok")
         self.end_headers()
+
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
         self.wfile.write(b"Hello, world!")
+
     def do_POST(self):
         print(self.path)
         if self.path == "/print":
-            #print the ip address of the client
+            # print the ip address of the client
             print(self.client_address)
             print("POST /print")
             content_length = int(self.headers["Content-Length"])
@@ -319,18 +323,28 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "ticket_type is required"}).encode())
+                self.wfile.write(json.dumps(
+                    {"error": "ticket_type is required"}).encode())
                 return
 
-            fullName = jsondata.get("fullName") if jsondata.get("fullName") is not None else ""
-            company = jsondata.get("company") if jsondata.get("company") is not None else ""
-            title = jsondata.get("title") if jsondata.get("title") is not None else ""
-            top_left_text = jsondata.get("top_left_text") if jsondata.get("top_left_text") is not None else ""
-            top_right_text = jsondata.get("top_right_text") if jsondata.get("top_right_text") is not None else ""
-            bottom_left_text = jsondata.get("bottom_left_text") if jsondata.get("bottom_left_text") is not None else ""
-            bottom_right_text = jsondata.get("bottom_right_text") if jsondata.get("bottom_right_text") is not None else ""
-            qrcode_id = jsondata.get("qrcode_id") if jsondata.get("qrcode_id") is not None else ""
-            language = jsondata.get("language") if jsondata.get("language") is not None else "DONT SKIP"
+            fullName = jsondata.get("fullName") if jsondata.get(
+                "fullName") is not None else ""
+            company = jsondata.get("company") if jsondata.get(
+                "company") is not None else ""
+            title = jsondata.get("title") if jsondata.get(
+                "title") is not None else ""
+            top_left_text = jsondata.get("top_left_text") if jsondata.get(
+                "top_left_text") is not None else ""
+            top_right_text = jsondata.get("top_right_text") if jsondata.get(
+                "top_right_text") is not None else ""
+            bottom_left_text = jsondata.get("bottom_left_text") if jsondata.get(
+                "bottom_left_text") is not None else ""
+            bottom_right_text = jsondata.get("bottom_right_text") if jsondata.get(
+                "bottom_right_text") is not None else ""
+            qrcode_id = jsondata.get("qrcode_id") if jsondata.get(
+                "qrcode_id") is not None else ""
+            language = jsondata.get("language") if jsondata.get(
+                "language") is not None else "DONT SKIP"
 
             print_badge(
                 fullName=fullName,
@@ -349,12 +363,13 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Card printed")
 
+
 # Create the HTTPS server
 httpd = socketserver.TCPServer((host, port), MyHTTPRequestHandler)
-httpd.socket = ssl.wrap_socket(httpd.socket, certfile=certfile, keyfile=keyfile, server_side=True)
+httpd.socket = ssl.wrap_socket(
+    httpd.socket, certfile=certfile, keyfile=keyfile, server_side=True)
 
-#log my ip address
-import socket
+# log my ip address
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 print("Your Computer IP Address is:" + IPAddr)
