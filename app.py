@@ -45,7 +45,7 @@ class CustomTextWrapper(textwrap.TextWrapper):
         chunks = super()._split(text)
         new_chunks = []
         for chunk in chunks:
-            print(chunk)
+            #print(chunk)
             if '\u4e00' <= chunk[0] <= '\u9fff':
                 new_chunks.extend(list(chunk))
             else:
@@ -58,18 +58,19 @@ class CustomTextWrapper(textwrap.TextWrapper):
             raise ValueError("invalid width %r (must be > 0)" % self.width)
         if chunks:
             cur_line = [chunks.pop(0)]
-            cur_len = len(cur_line[0])
+            cur_len = get_width_of_string(cur_line[0])
         else:
             cur_line = []
             cur_len = 0
         while chunks:
-            if cur_len + len(chunks[0]) <= self.width:
-                cur_len += len(chunks[0])
+            chunk_width = get_width_of_string(chunks[0])
+            if cur_len + chunk_width <= self.width:
+                cur_len += chunk_width
                 cur_line.append(chunks.pop(0))
             else:
                 lines.append(''.join(cur_line))
                 cur_line = [chunks.pop(0)]
-                cur_len = len(cur_line[0])
+                cur_len = get_width_of_string(cur_line[0])
         if cur_line:
             lines.append(''.join(cur_line))
         return lines
@@ -210,10 +211,10 @@ def print_badge(
     else:
         fullName = fullName[:-2]
 
-    customTextWrapper = CustomTextWrapper(width=18)
+    customTextWrapper = CustomTextWrapper(width=15)
     wrapped_fullName = customTextWrapper.fill(fullName)
     wrapped_fullName_lines = wrapped_fullName.splitlines()
-    print("wrapped_fullName_lines")
+    #print("wrapped_fullName_lines")
     line_used = 0
     line_height = 8 * mm
     for i, line in enumerate(wrapped_fullName_lines):
@@ -222,19 +223,19 @@ def print_badge(
                      (line_used * line_height), line)
         line_used = line_used + 1
 
-    print("drawed name")
+    #print("drawed name")
     customTextWrapper = CustomTextWrapper(width=20)
     wrapped_company = customTextWrapper.fill(company)
     wrapped_company_lines = wrapped_company.splitlines()
 
-    print("wrapped_company_lines")
+    #print("wrapped_company_lines")
     for i, line in enumerate(wrapped_company_lines):
         c.setFont(FONTNAME, 14)
         c.drawString(margin, height - 10 * mm -
                      (line_used * line_height), line)
         line_used = line_used + 1
 
-    print("drawed company")
+    #print("drawed company")
     # draw the 4 concer
     c.setFont(FONTNAME, 8)
     c.drawString(margin, height - margin, top_left_text)
@@ -312,12 +313,6 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             jsondata = json.loads(body)
 
             ticket_type = jsondata.get("ticket_type", "")
-            if ticket_type == "student_full":
-                self.send_response(200)
-                self.send_header("Content-type", "text/plain")
-                self.end_headers()
-                self.wfile.write(b"Student ticket is not allowed to print")
-                return
 
             if ticket_type == "":
                 self.send_response(400)
