@@ -15,6 +15,8 @@ print_name = "PrinterB"
 # set the font
 FONTNAME = "Msjh"
 pdfmetrics.registerFont(TTFont(FONTNAME, "./msjh.ttf"))
+FONTNAMEBOLD = "MsjhBold"
+pdfmetrics.registerFont(TTFont(FONTNAMEBOLD, "./msjhbd.ttc"))
 # Convert dimensions from mm to points (1mm = 2.83465 points)
 
 width, height = 90 * mm, 62 * mm
@@ -217,7 +219,7 @@ def print_badge(
     line_used = 0
     line_height = 8 * mm
     for i, line in enumerate(wrapped_fullName_lines):
-        c.setFont(FONTNAME, 20)
+        c.setFont(FONTNAMEBOLD, 20)
         c.drawString(margin, height - 15 * mm - (line_used * line_height), line)
         line_used = line_used + 1
 
