@@ -91,35 +91,35 @@ def print_with_selected_printer(printer_name, filename):
 
 
 def create_badge(
-    fullName,
+    fullname,
     company,
     qrcode_context,
 ):
     # remove the all the file name limit characters
-    fullName = remove_not_allowed_chars(fullName)
+    fullname = remove_not_allowed_chars(fullname)
     company = remove_not_allowed_chars(company)
     pdfName = (
         qrcode_context + ".pdf"
         if qrcode_context is not None and qrcode_context != ""
-        else fullName + ".pdf"
+        else fullname + ".pdf"
     )
-    pdfPath = os.path.join("docs", pdfName)
+    pdf_path = os.path.join("docs", pdfName)
     # create the pdf
-    c = canvas.Canvas(pdfPath, pagesize=(WIDTH, HEIGHT))
+    c = canvas.Canvas(pdf_path, pagesize=(WIDTH, HEIGHT))
     # config the font and wrap the text - fullName
-    customTextWrapper = CustomTextWrapper(width=15)
-    wrapped_fullName = customTextWrapper.fill(fullName)
-    wrapped_fullName_lines = wrapped_fullName.splitlines()
+    custom_text_wrapper = CustomTextWrapper(width=15)
+    wrapped_fullname = custom_text_wrapper.fill(fullname)
+    wrapped_fullname_lines = wrapped_fullname.splitlines()
     line_used = 0
     # draw the text - fullName
-    for i, line in enumerate(wrapped_fullName_lines):
+    for i, line in enumerate(wrapped_fullname_lines):
         c.setFont(FONTNAMEBOLD, 20)
         c.drawString(MARGIN, HEIGHT - 10 * mm - (line_used * LINE_HEIGHT), line)
         line_used = line_used + 1
 
     # config the font and wrap the text - company
-    customTextWrapper = CustomTextWrapper(width=20)
-    wrapped_company = customTextWrapper.fill(company)
+    custom_text_wrapper = CustomTextWrapper(width=20)
+    wrapped_company = custom_text_wrapper.fill(company)
     wrapped_company_lines = wrapped_company.splitlines()
 
     # draw the text - company
@@ -136,8 +136,8 @@ def create_badge(
         )
     c.save()
     # convert the pdf to image
-    images = convert_from_path(pdfPath)
-    imagePath = os.path.join("docs", pdfName + ".jpg")
-    images[0].save(imagePath, "JPEG")
+    images = convert_from_path(pdf_path)
+    image_path = os.path.join("docs", pdfName + ".jpg")
+    images[0].save(image_path, "JPEG")
     # print the image
-    print_with_selected_printer(PRINTER_NAME, imagePath)
+    print_with_selected_printer(PRINTER_NAME, image_path)

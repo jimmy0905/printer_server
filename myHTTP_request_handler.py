@@ -28,33 +28,36 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             body = self.rfile.read(content_length)
             jsondata = json.loads(body)
 
-            ticket_type = jsondata.get("ticket_type", "")
-            print(ticket_type)
+            pass_type = jsondata.get("ticket_type", "")
             # check if ticket_type is virtual , if yes, then return
-            if ticket_type == "virtual":
+            if pass_type == "virtual" or pass_type == "experience":
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
                 self.wfile.write(
-                    json.dumps({"error": "ticket_type is required"}).encode()
+                    json.dumps(
+                        {
+                            "error": "Ticket type not supported",
+                        }
+                    ).encode("utf-8")
                 )
                 return
 
-            fullName = (
+            fullname = (
                 jsondata.get("fullName") if jsondata.get("fullName") is not None else ""
             )
-            company = ( 
+            company = (
                 jsondata.get("company") if jsondata.get("company") is not None else ""
             )
-            qrcode_context = (
-                jsondata.get("qrcode_context")
-                if jsondata.get("qrcode_context") is not None
+            qr_code = (
+                jsondata.get("qrCode")
+                if jsondata.get("qrCode") is not None
                 else ""
             )
             create_badge(
-                fullName,
+                fullname,
                 company,
-                qrcode_context,
+                qr_code
             )
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
