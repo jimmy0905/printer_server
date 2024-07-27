@@ -12,7 +12,7 @@ import os
 from reportlab.pdfgen import canvas
 
 # printname
-PRINTER_NAME = "PrinterB"
+PRINTER_NAME = "Fax"
 
 
 # set the font
@@ -48,11 +48,11 @@ def print_with_selected_printer(printer_name, filename):
 
     if landscape:
         if img.size[1] > img.size[0]:
-            print("Landscape mode, tall image, rotate bitmap.")
+            #print("Landscape mode, tall image, rotate bitmap.")
             img = img.rotate(90, expand=True)
     else:
         if img.size[1] < img.size[0]:
-            print("Portrait mode, wide image, rotate bitmap.")
+            #print("Portrait mode, wide image, rotate bitmap.")
             img = img.rotate(90, expand=True)
 
     img_width = img.size[0]
@@ -99,9 +99,7 @@ def create_badge(
     fullname = remove_not_allowed_chars(fullname)
     company = remove_not_allowed_chars(company)
     pdfName = (
-        qrcode_context + ".pdf"
-        if qrcode_context is not None and qrcode_context != ""
-        else fullname + ".pdf"
+        fullname + "_" + company + ".pdf"
     )
     pdf_path = os.path.join("docs", pdfName)
     # create the pdf

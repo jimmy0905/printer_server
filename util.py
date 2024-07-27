@@ -4,14 +4,13 @@ import os
 
 def remove_not_allowed_chars(text):
     # chinese and english characters are allowed
-    return re.sub(r"[^\u4e00-\u9fffA-Za-z]", "", text)
+    # space are allowed and . , ! ? are allowed
+    return re.sub(r"[^\u4e00-\u9fffA-Za-z0-9\s\.\,\!\?]", "", text)
 
 
 def add_poppler_to_path():
     poppler_relative_path = "poppler-24.02.0/Library/bin"
     poppler_path = os.path.abspath(poppler_relative_path)
-
-    print(poppler_path)
 
     # Get the current PATH variable
     current_path = os.environ.get("PATH", "")

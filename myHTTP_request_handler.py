@@ -12,7 +12,7 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_OPTIONS(self):
-        print(self.path)
+        #print(self.path)
         self.send_response(200, "ok")
         self.end_headers()
 
@@ -27,27 +27,11 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             content_length = int(self.headers["Content-Length"])
             body = self.rfile.read(content_length)
             jsondata = json.loads(body)
-
-            pass_type = jsondata.get("ticket_type", "")
-            # check if ticket_type is virtual , if yes, then return
-            if pass_type == "virtual" or pass_type == "experience":
-                self.send_response(400)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(
-                    json.dumps(
-                        {
-                            "error": "Ticket type not supported",
-                        }
-                    ).encode("utf-8")
-                )
-                return
-
             fullname = (
                 jsondata.get("fullName") if jsondata.get("fullName") is not None else ""
             )
             company = (
-                jsondata.get("company") if jsondata.get("company") is not None else ""
+                jsondata.get("organizationName") if jsondata.get("company") is not None else ""
             )
             qr_code = (
                 jsondata.get("qrCode")
