@@ -31,7 +31,7 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 jsondata.get("fullName") if jsondata.get("fullName") is not None else ""
             )
             company = (
-                jsondata.get("organizationName") if jsondata.get("company") is not None else ""
+                jsondata.get("organizationName") if jsondata.get("organizationName") is not None else ""
             )
             qr_code = (
                 jsondata.get("qrCode")
