@@ -1,3 +1,4 @@
+import os
 import socket
 import ssl
 import socketserver
@@ -5,10 +6,14 @@ from util import add_poppler_to_path, create_docs_folder
 from myHTTP_request_handler import MyHTTPRequestHandler
 from createSSL import createSSL
 
-createSSL()
-# Generate an SSL/TLS certificate
 certfile = "cert.pem"
 keyfile = "key.pem"
+# check if cert.pem and key.pem exist
+if not (os.path.exists(certfile) and os.path.exists(keyfile)):
+    print("Generating SSL/TLS certificate...")
+    # Generate an SSL/TLS certificate
+    createSSL()
+
 
 add_poppler_to_path()
 
