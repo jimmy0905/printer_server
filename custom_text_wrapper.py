@@ -24,14 +24,27 @@ class CustomTextWrapper(textwrap.TextWrapper):
             cur_line = []
             cur_len = 0
         while chunks:
-            chunk_width = get_width_of_string(chunks[0])
+            chunk = chunks.pop(0)
+            chunk_width = get_width_of_string(chunk)
             if cur_len + chunk_width <= self.width:
                 cur_len += chunk_width
-                cur_line.append(chunks.pop(0))
+                cur_line.append(chunk)
             else:
-                lines.append("".join(cur_line))
-                cur_line = [chunks.pop(0)]
-                cur_len = get_width_of_string(cur_line[0])
+                if chunk_width > self.width:
+                    # Split the chunk if it's wider than the width
+                    split_point = self.width - cur_len
+                    cur_line.append(chunk[:split_point])
+                    lines.append("".join(cur_line))
+                    chunk = chunk[split_point:]
+                    while get_width_of_string(chunk) > self.width:
+                        lines.append(chunk[:self.width])
+                        chunk = chunk[self.width:]
+                    cur_line = [chunk]
+                    cur_len = get_width_of_string(chunk)
+                else:
+                    lines.append("".join(cur_line))
+                    cur_line = [chunk]
+                    cur_len = get_width_of_string(cur_line[0])
         if cur_line:
             lines.append("".join(cur_line))
         return lines
