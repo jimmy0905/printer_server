@@ -12,7 +12,7 @@ import os
 from reportlab.pdfgen import canvas
 
 # printname
-PRINTER_NAME = "Fax"
+PRINTER_NAME = "Brother QL-820NWB"
 
 
 # set the font
@@ -24,10 +24,13 @@ pdfmetrics.registerFont(TTFont(FONTNAMEBOLD, "./msjhbd.ttc"))
 
 # Badge configuration
 WIDTH, HEIGHT = 90 * mm, 62 * mm
-MARGIN = 7 * mm
-LINE_HEIGHT = 8 * mm
-QRCODE_SIZE = 20 * mm
-QRCODE_MARGIN = 5 * mm
+MARGIN = 1 * mm
+NAME_LINE_HEIGHT = 10 * mm
+COMPANY_LINE_HEIGHT = 6* mm
+QRCODE_SIZE = 25 * mm
+QRCODE_MARGIN = 2 * mm
+
+CORNER_MARGIN = 1 * mm
 
 
 def print_with_selected_printer(printer_name, filename):
@@ -48,11 +51,11 @@ def print_with_selected_printer(printer_name, filename):
 
     if landscape:
         if img.size[1] > img.size[0]:
-            #print("Landscape mode, tall image, rotate bitmap.")
+            # print("Landscape mode, tall image, rotate bitmap.")
             img = img.rotate(90, expand=True)
     else:
         if img.size[1] < img.size[0]:
-            #print("Portrait mode, wide image, rotate bitmap.")
+            # print("Portrait mode, wide image, rotate bitmap.")
             img = img.rotate(90, expand=True)
 
     img_width = img.size[0]
@@ -94,13 +97,15 @@ def create_badge(
     fullname,
     company,
     qrcode_context,
+    tl,
+    tr,
+    bl,
+    br,
 ):
     # remove the all the file name limit characters
     fullname = remove_not_allowed_chars(fullname)
     company = remove_not_allowed_chars(company)
-    pdfName = (
-        fullname + "_" + company + ".pdf"
-    )
+    pdfName = fullname + "_" + company + ".pdf"
     pdf_path = os.path.join("docs", pdfName)
     # create the pdf
     c = canvas.Canvas(pdf_path, pagesize=(WIDTH, HEIGHT))
@@ -108,30 +113,44 @@ def create_badge(
     custom_text_wrapper = CustomTextWrapper(width=15)
     wrapped_fullname = custom_text_wrapper.fill(fullname)
     wrapped_fullname_lines = wrapped_fullname.splitlines()
-    line_used = 0
+    fullname_line_used = 0
     # draw the text - fullName
     for i, line in enumerate(wrapped_fullname_lines):
-        c.setFont(FONTNAMEBOLD, 20)
-        c.drawString(MARGIN, HEIGHT - 10 * mm - (line_used * LINE_HEIGHT), line)
-        line_used = line_used + 1
+        c.setFont(FONTNAMEBOLD, 26)
+        c.drawString(MARGIN, HEIGHT - 10 * mm - (fullname_line_used * NAME_LINE_HEIGHT), line)
+        fullname_line_used = fullname_line_used + 1
 
     # config the font and wrap the text - company
     custom_text_wrapper = CustomTextWrapper(width=20)
     wrapped_company = custom_text_wrapper.fill(company)
     wrapped_company_lines = wrapped_company.splitlines()
-
+    company_line_used = 0
     # draw the text - company
     for i, line in enumerate(wrapped_company_lines):
         c.setFont(FONTNAME, 14)
-        c.drawString(MARGIN, HEIGHT - 10 * mm - (line_used * LINE_HEIGHT), line)
-        line_used = line_used + 1
+        c.drawString(MARGIN, HEIGHT - 10 * mm - (company_line_used * COMPANY_LINE_HEIGHT) - 28* mm, line)
+        company_line_used = company_line_used + 1
 
     # draw the qr code
     if qrcode_context is not None and qrcode_context != "":
         qr = QRCodeImage(qrcode_context, size=QRCODE_SIZE)
         qr.drawOn(
-            c, WIDTH - QRCODE_SIZE - QRCODE_MARGIN, HEIGHT - 25 * mm - QRCODE_SIZE
+            c, WIDTH - QRCODE_SIZE - QRCODE_MARGIN, HEIGHT - 30 * mm - QRCODE_SIZE
         )
+    # draw the text - top left
+    c.setFont(FONTNAME, 10)
+    # get the height and width of the text
+    tl_width, tl_height = c.stringWidth(tl, FONTNAME, 10), c._leading
+    c.drawString(CORNER_MARGIN , HEIGHT - CORNER_MARGIN - tl_height, tl)
+    # draw the text - top right
+    tr_width, tr_height = c.stringWidth(tr, FONTNAME, 10), c._leading
+    c.drawString(WIDTH - CORNER_MARGIN - tr_width, HEIGHT - CORNER_MARGIN - tr_height, tr)
+    # draw the text - bottom left
+    bl_width, bl_height = c.stringWidth(bl, FONTNAME, 10), c._leading
+    c.drawString(CORNER_MARGIN, CORNER_MARGIN, bl)
+    # draw the text - bottom right
+    br_width, br_height = c.stringWidth(br, FONTNAME, 10), c._leading
+    c.drawString(WIDTH - CORNER_MARGIN - br_width, CORNER_MARGIN, br)
     c.save()
     # convert the pdf to image
     images = convert_from_path(pdf_path)

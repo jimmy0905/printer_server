@@ -41,7 +41,11 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             create_badge(
                 fullname,
                 company,
-                qr_code
+                qr_code,
+                tl="",
+                tr="",
+                bl="",
+                br="",
             )
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
