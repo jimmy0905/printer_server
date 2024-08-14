@@ -24,7 +24,7 @@ pdfmetrics.registerFont(TTFont(FONTNAMEBOLD, "./msjhbd.ttc"))
 
 # Badge configuration
 WIDTH, HEIGHT = 90 * mm, 62 * mm
-MARGIN = 1 * mm
+MARGIN = 2 * mm
 NAME_LINE_HEIGHT = 10 * mm
 COMPANY_LINE_HEIGHT = 6* mm
 QRCODE_SIZE = 25 * mm
